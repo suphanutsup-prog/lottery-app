@@ -9,14 +9,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gold:#D4AF37; --gold-dim:rgba(212,175,55,0.15);
-  --deep:#07090F; --s1:#0F1520; --s2:#151E2E; --s3:#1C2840;
-  --green:#00D68F; --green-dim:rgba(0,214,143,0.12);
-  --red:#FF4757; --red-dim:rgba(255,71,87,0.12);
-  --blue:#4FC3F7; --blue-dim:rgba(79,195,247,0.12);
-  --purple:#B39DDB; --purple-dim:rgba(179,157,219,0.12);
-  --text:#E2D9C0; --muted:#60708A;
-  --border:rgba(212,175,55,0.18); --border2:rgba(255,255,255,0.06);
+  /* ── Sand / Warm Parchment Palette ── */
+  --gold:#B8955A;        /* amber accent */
+  --gold-light:#D4B07A;
+  --gold-dim:rgba(184,149,90,0.15);
+  --deep:#F5F0E8;        /* warm white background */
+  --s1:#EDE8DF;          /* card surface */
+  --s2:#E5DFD3;          /* input surface */
+  --s3:#DDD7C8;          /* deeper surface */
+  --green:#3D7A52;       --green-dim:rgba(61,122,82,0.12);
+  --red:#B85040;         --red-dim:rgba(184,80,64,0.10);
+  --blue:#4A7A96;        --blue-dim:rgba(74,122,150,0.12);
+  --purple:#7A6496;      --purple-dim:rgba(122,100,150,0.12);
+  --text:#2C2418;        /* dark warm brown text */
+  --muted:#7A7060;
+  --border:rgba(184,149,90,0.30);
+  --border2:rgba(44,36,24,0.10);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--deep);color:var(--text);font-family:'Mitr',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
@@ -340,23 +348,38 @@ table.tbl{width:100%;border-collapse:collapse;}
 
 /* ── PHONE Portrait (≤480px) ── */
 @media (max-width: 480px) {
-  .nav-tab { padding:0 8px; font-size:11px; }
-
-  /* iPhone: เรียงทุกอย่างแนวตั้ง */
-  .scan-page {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto 1fr auto !important;
+  /* Body: ไม่ใช้ grid แล้ว ใช้ flex column แทน */
+  body {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 
-  /* Scanner zone เต็มความกว้าง ไม่ scroll แนวนอน */
-  .scan-left {
+  .nav { height: 46px; padding: 0 6px; flex-shrink: 0; }
+  .nav-logo { display: none; }
+  .nav-tab { padding: 0 10px; font-size: 11px; height: 46px; }
+
+  /* Scan page: flex column เต็มจอ */
+  .scan-page {
+    display: flex !important;
     flex-direction: column !important;
+    grid-template-columns: unset !important;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Left panel: column เต็มความกว้าง */
+  .scan-left {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0;
+    width: 100% !important;
     max-height: none !important;
     overflow: visible !important;
-    border-bottom: 1px solid var(--border2);
     border-right: none !important;
-    flex-shrink: 0;
+    border-bottom: 1px solid var(--border2);
   }
 
   .scan-zone {
@@ -367,53 +390,74 @@ table.tbl{width:100%;border-collapse:collapse;}
     padding: 10px 14px;
   }
 
-  #scanInput { font-size: 28px; letter-spacing: 6px; padding: 12px; }
+  #scanInput { font-size: 26px; letter-spacing: 6px; padding: 11px; }
+  .scan-hint { font-size: 10px; margin-top: 5px; }
+  .counters { gap: 5px; margin-top: 8px; }
+  .cbox .cn { font-size: 17px; }
+  .cbox .ck { font-size: 8px; }
+  .last-scan { display: none; }
+  #modeGov, #modeChar { font-size: 12px !important; padding: 8px !important; }
 
-  /* Fee + Draw: แนวนอนเต็มความกว้าง */
+  /* Fee panel: แถวเดียวแนวนอน */
   .fee-panel {
     width: 100% !important;
     min-width: 0 !important;
     border-right: none !important;
     border-bottom: 1px solid var(--border2);
+    display: flex !important;
     flex-direction: row !important;
-    padding: 8px 14px;
-    gap: 16px;
     align-items: center;
-    justify-content: flex-start;
+    gap: 20px;
+    padding: 8px 14px;
   }
-  .fee-row { margin-bottom: 0 !important; }
-  .fee-label { font-size: 12px; }
-  .fee-input-wrap input { width: 44px; font-size: 15px; }
+  .fee-row { margin-bottom: 0 !important; flex: 1; }
+  .fee-label { font-size: 11px; }
+  .fee-input-wrap input { width: 44px; font-size: 14px; }
 
-  /* Draw list: ซ่อนบน iPhone เพื่อประหยัดพื้นที่ ไปจัดการที่หน้า ⚙️ แทน */
+  /* ซ่อน draw list บน iPhone */
   .draws-left { display: none !important; }
 
-  /* ซ่อน header ของ right panel */
+  /* Right panel: flex ที่เหลือ */
+  .scan-right {
+    flex: 1;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .scan-right-header { display: none; }
 
-  /* Tickets */
-  .ticket-wrap { padding: 6px 12px; }
-  .tbl th:nth-child(2), .trow td:nth-child(2) { display: none; } /* งวด */
-  .tbl th:nth-child(4), .trow td:nth-child(4) { display: none; } /* ชุด */
-  .tbl th:nth-child(5), .trow td:nth-child(5) { display: none; } /* ประเภท */
+  .ticket-wrap { flex: 1; overflow-y: auto; padding: 6px 12px; }
+  .tbl th:nth-child(2), .trow td:nth-child(2) { display: none; }
+  .tbl th:nth-child(4), .trow td:nth-child(4) { display: none; }
+  .tbl th:nth-child(5), .trow td:nth-child(5) { display: none; }
   .td-n { font-size: 16px; letter-spacing: 3px; }
   .td-a { font-size: 12px; }
 
   /* Summary bar */
-  .session-bar { padding: 8px 12px; }
-  .session-nums { grid-template-columns: repeat(3,1fr); gap: 4px; }
+  .session-bar { padding: 8px 12px; flex-shrink: 0; }
+  .session-bar-top { flex-direction: column; gap: 5px; }
+  .session-nums { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+  .snum { padding: 5px 4px; }
   .snum .sv { font-size: 12px; }
   .snum .sk { font-size: 8px; }
   .finish-btn { font-size: 13px; padding: 12px; margin-top: 4px; }
 
-  /* Modal slide up */
+  /* Modal slide up from bottom */
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal { border-radius: 16px 16px 0 0; max-height: 90dvh; }
+
+  /* Log & Settings */
+  .log-list { padding: 10px 12px; }
+  .log-card { padding: 12px; }
+  .settings-inner { padding: 12px; }
+  .settings-section { padding: 14px; }
 }
 
-/* ── TINY PHONE ≤380px (iPhone SE) ── */
+/* ── iPhone SE ≤380px ── */
 @media (max-width: 380px) {
-  #scanInput { font-size: 24px; letter-spacing: 4px; }
+  #scanInput { font-size: 22px; letter-spacing: 4px; }
   .fee-input-wrap input { width: 38px; font-size: 13px; }
   .session-nums { grid-template-columns: repeat(2,1fr); }
 }
@@ -472,14 +516,14 @@ table.tbl{width:100%;border-collapse:collapse;}
       <div class="fee-row">
         <div class="fee-label"><span class="fee-badge-gov">รัฐบาล</span> ค่าบริการ</div>
         <div class="fee-input-wrap">
-          <input type="number" id="feeGov" value="5" min="0" max="50" step="0.5" onchange="updateSummaryBar()">
+          <input type="number" id="feeGov" value="1" min="0" max="50" step="0.5" onchange="updateSummaryBar()">
           <span>%</span>
         </div>
       </div>
       <div class="fee-row">
         <div class="fee-label"><span class="fee-badge-char">กุศล</span> ค่าบริการ</div>
         <div class="fee-input-wrap">
-          <input type="number" id="feeChar" value="3" min="0" max="50" step="0.5" onchange="updateSummaryBar()">
+          <input type="number" id="feeChar" value="1.5" min="0" max="50" step="0.5" onchange="updateSummaryBar()">
           <span>%</span>
         </div>
       </div>
