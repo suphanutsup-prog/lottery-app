@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ระบบขึ้นรางวัลหวย</title>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#D4AF37; --gold-dim:rgba(212,175,55,0.15);
+  --deep:#07090F; --s1:#0F1520; --s2:#151E2E; --s3:#1C2840;
+  --green:#00D68F; --green-dim:rgba(0,214,143,0.12);
+  --red:#FF4757; --red-dim:rgba(255,71,87,0.12);
+  --blue:#4FC3F7; --blue-dim:rgba(79,195,247,0.12);
+  --purple:#B39DDB; --purple-dim:rgba(179,157,219,0.12);
+  --text:#E2D9C0; --muted:#60708A;
+  --border:rgba(212,175,55,0.18); --border2:rgba(255,255,255,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--deep);color:var(--text);font-family:'Mitr',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── NAV TABS ── */
+.nav{background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:0;height:50px;flex-shrink:0;}
+.nav-logo{font-size:15px;font-weight:600;color:var(--gold);margin-right:20px;white-space:nowrap;}
+.nav-tab{padding:0 18px;height:50px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:'Mitr',sans-serif;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.nav-tab .badge{background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-family:'IBM Plex Mono',monospace;}
+
+/* ── PAGES ── */
+.page{display:none;flex:1;overflow:hidden;}
+.page.active{display:flex;}
+
+/* ══════════════════════════════
+   PAGE: SCAN (หน้าสแกน)
+══════════════════════════════ */
+.scan-page{display:grid;grid-template-columns:300px 1fr;height:100%;}
+
+/* Left: scanner + controls */
+.scan-left{background:var(--s1);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden;}
+.scan-zone{padding:16px;border-bottom:1px solid var(--border2);}
+.plabel{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+#scanInput{width:100%;background:var(--s2);border:2px solid var(--border);border-radius:12px;
+  padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;
+  color:var(--gold);letter-spacing:6px;outline:none;text-align:center;transition:border-color .15s,box-shadow .15s;}
+#scanInput:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);}
+#scanInput.fl-ok {border-color:var(--green)!important;box-shadow:0 0 0 4px var(--green-dim)!important;}
+#scanInput.fl-dup{border-color:var(--red)!important;  box-shadow:0 0 0 4px var(--red-dim)!important;}
+#scanInput.fl-new{border-color:var(--blue)!important; box-shadow:0 0 0 4px var(--blue-dim)!important;}
+#scanInput.fl-err{border-color:var(--red)!important;  box-shadow:0 0 0 4px var(--red-dim)!important;}
+.scan-hint{margin-top:7px;text-align:center;font-size:11px;color:var(--muted);}
+.counters{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:10px;}
+.cbox{background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:7px 4px;text-align:center;}
+.cbox .cn{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;line-height:1;}
+.cbox .ck{font-size:9px;color:var(--muted);margin-top:2px;}
+.ct .cn{color:var(--text);} .cw .cn{color:var(--green);} .cd .cn{color:var(--red);}
+.last-scan{margin-top:10px;background:var(--s3);border-radius:9px;padding:9px 12px;min-height:52px;}
+.ls-top{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
+.ls-num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;letter-spacing:4px;flex:1;}
+.ls-tag{font-size:10px;padding:2px 8px;border-radius:5px;white-space:nowrap;font-weight:600;}
+.ls-tag.win  {background:var(--green-dim);color:var(--green);border:1px solid rgba(0,214,143,.3);}
+.ls-tag.lose {background:rgba(96,112,138,.15);color:var(--muted);border:1px solid var(--border2);}
+.ls-tag.dup  {background:var(--red-dim);color:var(--red);border:1px solid rgba(255,71,87,.3);}
+.ls-tag.gov  {background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,175,55,.3);}
+.ls-tag.char {background:var(--purple-dim);color:var(--purple);border:1px solid rgba(179,157,219,.3);}
+.ls-meta{font-size:10px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+
+/* Fee settings */
+.fee-panel{padding:14px 16px;border-bottom:1px solid var(--border2);}
+.fee-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.fee-row:last-child{margin-bottom:0;}
+.fee-label{font-size:12px;display:flex;align-items:center;gap:6px;}
+.fee-badge-gov {font-size:10px;background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,175,55,.3);padding:1px 7px;border-radius:4px;}
+.fee-badge-char{font-size:10px;background:var(--purple-dim);color:var(--purple);border:1px solid rgba(179,157,219,.3);padding:1px 7px;border-radius:4px;}
+.fee-input-wrap{display:flex;align-items:center;gap:4px;}
+.fee-input-wrap input{width:52px;background:var(--s2);border:1px solid var(--border);border-radius:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--gold);
+  text-align:center;outline:none;padding:4px 6px;}
+.fee-input-wrap span{font-size:12px;color:var(--muted);}
+
+/* Draw list */
+.draws-left{flex:1;overflow-y:auto;padding:12px 14px;}
+.draws-left::-webkit-scrollbar{width:3px;}
+.draws-left::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.add-draw-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:7px;
+  background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--muted);
+  font-size:11px;cursor:pointer;font-family:'Mitr',sans-serif;margin-bottom:8px;transition:all .2s;}
+.add-draw-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim);}
+.draw-item{background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:8px 10px;margin-bottom:5px;}
+.draw-item.ok{border-color:rgba(0,214,143,.2);}
+.draw-item.no{border-color:rgba(255,71,87,.15);}
+.di-top{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.di-date{font-size:12px;font-weight:500;color:var(--text);}
+.di-status{font-size:10px;padding:1px 7px;border-radius:4px;}
+.di-ok {background:var(--green-dim);color:var(--green);border:1px solid rgba(0,214,143,.25);}
+.di-no {background:var(--red-dim);  color:var(--red);  border:1px solid rgba(255,71,87,.2);}
+.di-nums{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;}
+.di-num{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--s3);border:1px solid var(--border2);padding:1px 6px;border-radius:4px;color:var(--muted);}
+.di-num b{color:var(--text);}
+.di-stat{font-size:10px;color:var(--muted);margin-top:3px;}
+
+/* Right: ticket table */
+.scan-right{display:flex;flex-direction:column;overflow:hidden;}
+.scan-right-header{padding:10px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.scan-right-header h2{font-size:14px;font-weight:500;}
+.ticket-wrap{flex:1;overflow-y:auto;padding:8px 16px;}
+.ticket-wrap::-webkit-scrollbar{width:4px;}
+.ticket-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+table.tbl{width:100%;border-collapse:collapse;}
+.tbl th{text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:0 8px 7px;border-bottom:1px solid var(--border2);white-space:nowrap;}
+.tbl th.r{text-align:right;}
+.trow{border-bottom:1px solid var(--border2);transition:background .12s;animation:rowIn .2s ease;}
+.trow:hover{background:var(--s2);}
+.trow.wr{background:linear-gradient(90deg,rgba(0,214,143,.05),transparent 60%);}
+.trow td{padding:7px 8px;font-size:12px;vertical-align:middle;}
+.td-i{color:var(--muted);font-size:10px;width:22px;}
+.td-n{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;letter-spacing:3px;}
+.td-n.wn{color:var(--green);}
+.td-set{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue);background:var(--blue-dim);border:1px solid rgba(79,195,247,.2);padding:1px 6px;border-radius:4px;}
+.td-type{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;white-space:nowrap;}
+.type-gov {background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,175,55,.3);}
+.type-char{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(179,157,219,.3);}
+.type-unk {background:rgba(96,112,138,.12);color:var(--muted);border:1px solid var(--border2);}
+.td-draw{font-size:10px;color:var(--blue);}
+.td-p{font-size:11px;color:var(--muted);}
+.td-p.wp{color:var(--green);font-weight:600;}
+.td-a{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);text-align:right;}
+.td-d{text-align:center;width:26px;}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:3px;}
+.del-btn:hover{background:var(--red-dim);color:var(--red);}
+.empty-tbl{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-tbl .big{font-size:40px;margin-bottom:10px;opacity:.3;}
+.empty-tbl p{font-size:12px;line-height:1.8;}
+.draw-grp-hdr{background:var(--s2);border-bottom:1px solid var(--border2);}
+.draw-grp-hdr td{padding:5px 8px;font-size:10px;color:var(--blue);font-weight:500;}
+
+/* ── SESSION SUMMARY BAR ── */
+.session-bar{background:var(--s1);border-top:2px solid var(--border);padding:12px 18px;flex-shrink:0;}
+.session-bar-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.session-title{font-size:12px;color:var(--muted);}
+.session-nums{display:flex;gap:6px;flex:1;flex-wrap:wrap;}
+.snum{background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:5px 10px;text-align:center;flex:1;min-width:80px;}
+.snum .sv{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;line-height:1;}
+.snum .sk{font-size:9px;color:var(--muted);margin-top:2px;}
+.sv-total .sv{color:var(--text);}  .sv-win .sv{color:var(--green);}
+.sv-gov .sv{color:var(--gold);}    .sv-char .sv{color:var(--purple);}
+.sv-fee .sv{color:var(--red);}     .sv-net .sv{color:var(--green);font-size:17px;}
+
+/* FINISH BUTTON */
+.finish-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;
+  background:linear-gradient(135deg,#00a870,var(--green));color:#07090F;font-family:'Mitr',sans-serif;
+  font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:all .2s;}
+.finish-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,214,143,.3);}
+.finish-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ══════════════════════════════
+   PAGE: LOG (ประวัติ)
+══════════════════════════════ */
+.log-page{flex-direction:column;overflow:hidden;}
+.log-toolbar{padding:12px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
+.log-toolbar h2{font-size:15px;}
+.log-list{flex:1;overflow-y:auto;padding:14px 20px;}
+.log-list::-webkit-scrollbar{width:5px;}
+.log-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.log-card{background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;margin-bottom:10px;animation:rowIn .2s ease;}
+.log-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.log-meta{display:flex;flex-direction:column;gap:3px;}
+.log-num{font-size:13px;font-weight:600;color:var(--gold);}
+.log-time{font-size:11px;color:var(--muted);}
+.log-net{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--green);text-align:right;}
+.log-net-label{font-size:10px;color:var(--muted);text-align:right;}
+.log-stats{display:flex;gap:8px;flex-wrap:wrap;}
+.log-stat{background:var(--s2);border:1px solid var(--border2);border-radius:7px;padding:5px 10px;font-size:11px;text-align:center;}
+.log-stat .lsv{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--text);}
+.log-stat .lsk{font-size:9px;color:var(--muted);margin-top:1px;}
+.log-tickets{margin-top:10px;border-top:1px solid var(--border2);padding-top:10px;display:none;}
+.log-tickets.open{display:block;}
+.log-toggle{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Mitr',sans-serif;padding:0;margin-top:8px;}
+.log-toggle:hover{color:var(--text);}
+.log-ticket-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border2);font-size:12px;}
+.log-ticket-row:last-child{border-bottom:none;}
+.ltr-num{font-family:'IBM Plex Mono',monospace;font-size:16px;letter-spacing:3px;flex:1;}
+.ltr-num.win{color:var(--green);}
+.ltr-prize{color:var(--muted);font-size:11px;}
+.ltr-prize.win{color:var(--green);font-weight:600;}
+.ltr-amt{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);}
+.log-empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.log-empty .big{font-size:44px;margin-bottom:12px;opacity:.3;}
+
+/* ══════════════════════════════
+   PAGE: SETTINGS (ผลรางวัล)
+══════════════════════════════ */
+.settings-page{flex-direction:column;overflow:hidden;}
+.settings-inner{flex:1;overflow-y:auto;padding:20px;}
+.settings-inner::-webkit-scrollbar{width:5px;}
+.settings-inner::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.settings-section{background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.settings-section h3{font-size:14px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+
+/* ── SHARED COMPONENTS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-family:'Mitr',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.btn-gold{background:linear-gradient(135deg,#A07820,var(--gold));color:#07090F;font-weight:600;}
+.btn-gold:hover{box-shadow:0 4px 14px rgba(212,175,55,.3);transform:translateY(-1px);}
+.btn-ghost{background:var(--s2);color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{border-color:var(--border);color:var(--text);}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,71,87,.25);}
+.btn-danger:hover{background:rgba(255,71,87,.22);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;padding:20px;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px;width:100%;max-width:420px;transform:translateY(14px);transition:transform .2s;max-height:90vh;overflow-y:auto;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal h2{font-size:17px;color:var(--gold);margin-bottom:4px;}
+.modal-sub{font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+.fg{margin-bottom:11px;}
+.fl{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
+.fi{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:7px;padding:8px 11px;font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--text);letter-spacing:2px;outline:none;transition:border-color .2s;}
+.fi:focus{border-color:var(--gold);}
+.fi-sel{letter-spacing:0;font-size:13px;cursor:pointer;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+
+/* SESSION COMPLETE MODAL */
+.summary-modal .modal{max-width:480px;}
+.sum-block{background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.sum-block-title{font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;}
+.sum-line{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;}
+.sum-line .val{font-family:'IBM Plex Mono',monospace;font-size:14px;}
+.sum-line.total{border-top:1px solid var(--border2);margin-top:4px;padding-top:8px;font-size:14px;}
+.sum-line.total .val{font-size:18px;color:var(--green);}
+.sum-line.fee .val{color:var(--red);}
+.sum-line.net .val{color:var(--green);font-size:20px;}
+.sum-divider{height:1px;background:var(--border2);margin:10px 0;}
+
+/* Toasts */
+.toasts{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:5px;z-index:300;pointer-events:none;}
+.toast{background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:8px 13px;font-size:11px;display:flex;align-items:center;gap:6px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:tIn .22s ease,tOut .3s ease 2.6s forwards;white-space:nowrap;}
+.toast.win{border-color:rgba(0,214,143,.4);} .toast.err{border-color:rgba(255,71,87,.4);}
+.toast.dup{border-color:rgba(255,71,87,.4);} .toast.new{border-color:rgba(79,195,247,.4);}
+
+@keyframes tIn  {from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut {from{opacity:1}to{opacity:0}}
+@keyframes rowIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Mobile First
+   iPhone / Android: ≤ 640px
+   iPad / Tablet:    641–1024px
+   Desktop:          > 1024px
+══════════════════════════════════════════════ */
+
+/* ── TABLET Landscape (≤1024px) ── */
+@media (max-width: 1024px) {
+  .scan-page { grid-template-columns: 260px 1fr; }
+  .nav-logo  { display: none; }
+  .nav-tab   { padding: 0 12px; font-size: 12px; }
+  #scanInput { font-size: 20px; }
+  .snum .sv  { font-size: 13px; }
+  .snum .sk  { font-size: 8px; }
+}
+
+/* ── TABLET Portrait & Phone (≤768px) ── */
+@media (max-width: 768px) {
+  body { height: 100dvh; grid-template-columns: 1fr; grid-template-rows: 48px 1fr; }
+  .nav { padding: 0 8px; height: 48px; }
+  .nav-logo { display: none; }
+  .nav-tab  { padding: 0 10px; font-size: 11px; height: 48px; gap: 3px; }
+
+  .scan-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; overflow: hidden; }
+
+  .scan-left {
+    border-right: none; border-bottom: 1px solid var(--border2);
+    flex-direction: row; overflow-x: auto; overflow-y: hidden;
+    max-height: 195px; flex-shrink: 0;
+  }
+  .scan-left::-webkit-scrollbar { height: 2px; }
+  .scan-left::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .scan-zone { flex-shrink:0; width:230px; min-width:230px; border-bottom:none; border-right:1px solid var(--border2); padding:10px 12px; }
+  .plabel { font-size:9px; margin-bottom:5px; }
+  #scanInput { font-size:22px; letter-spacing:5px; padding:10px 12px; }
+  .scan-hint { font-size:10px; margin-top:5px; }
+  .counters  { gap:4px; margin-top:7px; }
+  .cbox .cn  { font-size:15px; }
+  .cbox .ck  { font-size:8px; }
+  .last-scan { display:none; }
+  #modeGov, #modeChar { font-size:11px !important; padding:5px !important; }
+
+  .fee-panel { flex-shrink:0; width:150px; min-width:150px; border-bottom:none; border-right:1px solid var(--border2); padding:10px; justify-content:center; }
+  .fee-row   { margin-bottom:6px; }
+  .fee-label { font-size:10px; gap:4px; }
+  .fee-input-wrap input { width:40px; font-size:13px; }
+
+  .draws-left { flex-direction:row; display:flex; gap:6px; padding:10px; overflow-x:auto; overflow-y:hidden; align-items:flex-start; flex-shrink:0; }
+  .draws-left .plabel { display:none; }
+  .add-draw-btn { flex-shrink:0; width:80px; height:62px; font-size:10px; margin-bottom:0; flex-direction:column; gap:2px; padding:5px; }
+  .draw-item { flex-shrink:0; width:148px; margin-bottom:0; padding:6px 8px; }
+  .di-date { font-size:11px; }
+  .di-nums { gap:3px; margin-top:3px; }
+  .di-num  { font-size:9px; padding:1px 4px; }
+
+  .scan-right { min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+  .scan-right-header { padding:8px 12px; flex-wrap:wrap; gap:6px; }
+  .scan-right-header h2 { font-size:13px; }
+  .ticket-wrap { padding:6px 10px; flex:1; overflow-y:auto; }
+  .tbl th { font-size:9px; padding:0 5px 6px; }
+  .trow td { padding:6px 5px; font-size:11px; }
+  .td-n { font-size:14px; letter-spacing:2px; }
+  .td-set { font-size:10px; padding:1px 4px; }
+  .td-type { font-size:9px; }
+  .td-draw { font-size:9px; }
+  .td-a { font-size:11px; }
+
+  .session-bar { padding:8px 12px; flex-shrink:0; }
+  .session-bar-top { flex-direction:column; gap:5px; }
+  .session-nums { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+  .snum { min-width:0; padding:5px 6px; }
+  .snum .sv { font-size:13px; }
+  .snum .sk { font-size:8px; }
+  .finish-btn { font-size:13px; padding:11px; margin-top:4px; }
+
+  .log-toolbar { padding:10px 14px; }
+  .log-list { padding:10px 12px; }
+  .log-card { padding:12px 14px; }
+  .log-net  { font-size:18px; }
+  .log-stats { gap:5px; }
+  .log-stat  { padding:4px 7px; }
+
+  .settings-inner { padding:12px; }
+  .settings-section { padding:14px; }
+
+  .modal { padding:18px 16px; max-height:85dvh; }
+  .modal h2 { font-size:16px; }
+  .fi { font-size:14px; padding:7px 10px; }
+}
+
+/* ── PHONE Portrait (≤480px) ── */
+@media (max-width: 480px) {
+  .nav-tab { padding:0 8px; font-size:11px; }
+  .scan-left { max-height:178px; }
+  .scan-zone { width:200px; min-width:200px; }
+  #scanInput { font-size:20px; letter-spacing:4px; }
+  .fee-panel { width:130px; min-width:130px; }
+  .draw-item { width:130px; }
+  .tbl th:nth-child(2), .trow td:nth-child(2) { display:none; }
+  .tbl th:nth-child(5), .trow td:nth-child(5) { display:none; }
+  .session-nums { grid-template-columns:repeat(2,1fr); }
+  .finish-btn { font-size:12px; padding:10px; }
+  .modal-overlay { padding:0; align-items:flex-end; }
+  .modal { border-radius:16px 16px 0 0; max-height:90dvh; }
+}
+
+/* ── TINY PHONE ≤380px (iPhone SE) ── */
+@media (max-width: 380px) {
+  #scanInput { font-size:18px; letter-spacing:3px; }
+  .scan-zone { width:175px; min-width:175px; }
+  .fee-panel { width:110px; min-width:110px; }
+  .fee-input-wrap input { width:34px; font-size:12px; }
+  .tbl th:nth-child(4), .trow td:nth-child(4) { display:none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">🏆 ระบบขึ้นรางวัล</div>
+  <button class="nav-tab active" onclick="showPage('scan', this)">🎟️ สแกน & ขึ้นรางวัล</button>
+  <button class="nav-tab" onclick="showPage('log', this)" id="logTab">📋 ประวัติ <span class="badge" id="logBadge" style="display:none">0</span></button>
+  <button class="nav-tab" onclick="showPage('settings', this)">⚙️ ผลรางวัล</button>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE: SCAN
+════════════════════════════════ -->
+<div class="page active scan-page" id="page-scan">
+
+  <!-- Left panel -->
+  <div class="scan-left">
+
+    <div class="scan-zone">
+      <div class="plabel">📡 โซนสแกน QR</div>
+      <input type="text" id="scanInput" maxlength="60" placeholder="_ _ _ _ _ _"
+             autocomplete="off" spellcheck="false"
+             onkeydown="onScanKeydown(event)" oninput="onScanInput(this)">
+
+      <!-- ปุ่มสลับประเภท -->
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button id="modeGov" onclick="setMode('GOV')"
+          style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--gold);background:var(--gold-dim);color:var(--gold);font-family:'Mitr',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">
+          🟡 รัฐบาล
+        </button>
+        <button id="modeChar" onclick="setMode('CHAR')"
+          style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:'Mitr',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">
+          🔵 กุศล
+        </button>
+      </div>
+      <div class="scan-hint">โหมด: <span id="modeLabel" style="color:var(--gold);font-weight:600;">รัฐบาล</span> • สแกนต่อเนื่องได้เลย</div>
+      <div class="counters">
+        <div class="cbox ct"><div class="cn" id="cTotal">0</div><div class="ck">ใบทั้งหมด</div></div>
+        <div class="cbox cw"><div class="cn" id="cWin">0</div><div class="ck">ถูกรางวัล</div></div>
+        <div class="cbox cd"><div class="cn" id="cDup">0</div><div class="ck">ซ้ำ (ข้าม)</div></div>
+      </div>
+      <div class="last-scan" id="lastScan">
+        <div class="ls-top"><div class="ls-num" style="color:var(--muted);font-size:12px;letter-spacing:1px;">รอสแกน...</div></div>
+      </div>
+    </div>
+
+    <!-- Fee rates -->
+    <div class="fee-panel">
+      <div class="plabel">อัตราค่าบริการ</div>
+      <div class="fee-row">
+        <div class="fee-label"><span class="fee-badge-gov">รัฐบาล</span> ค่าบริการ</div>
+        <div class="fee-input-wrap">
+          <input type="number" id="feeGov" value="5" min="0" max="50" step="0.5" onchange="updateSummaryBar()">
+          <span>%</span>
+        </div>
+      </div>
+      <div class="fee-row">
+        <div class="fee-label"><span class="fee-badge-char">กุศล</span> ค่าบริการ</div>
+        <div class="fee-input-wrap">
+          <input type="number" id="feeChar" value="3" min="0" max="50" step="0.5" onchange="updateSummaryBar()">
+          <span>%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Draw list -->
+    <div class="draws-left">
+      <div class="plabel">ผลรางวัลแต่ละงวด</div>
+      <button class="add-draw-btn" onclick="openAddDraw()">✚ เพิ่ม / กรอกผลรางวัล</button>
+      <div id="drawListLeft"></div>
+    </div>
+  </div>
+
+  <!-- Right panel: tickets + session bar -->
+  <div class="scan-right">
+    <div class="scan-right-header">
+      <h2>รายการลูกค้าปัจจุบัน <span id="sessionLabel" style="font-size:11px;color:var(--muted);font-weight:400;"></span></h2>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="focusScan()">🎯 Focus</button>
+        <button class="btn btn-danger btn-sm" onclick="clearSession()">🗑 ล้าง Session</button>
+      </div>
+    </div>
+
+    <div class="ticket-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th><th>งวด</th><th>เลข</th><th>ชุด</th><th>ประเภท</th><th>รางวัล</th><th class="r">ยอด</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="ticketBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Session summary bar -->
+    <div class="session-bar">
+      <div class="session-bar-top">
+        <span class="session-title">สรุป Session นี้</span>
+        <div class="session-nums">
+          <div class="snum sv-total"><div class="sv" id="sTot">0</div><div class="sk">ใบรวม</div></div>
+          <div class="snum sv-win"> <div class="sv" id="sWin">0</div><div class="sk">ถูกรางวัล</div></div>
+          <div class="snum sv-gov"> <div class="sv" id="sGovAmt">฿0</div><div class="sk">ยอดรัฐบาล</div></div>
+          <div class="snum sv-char"><div class="sv" id="sCharAmt">฿0</div><div class="sk">ยอดกุศล</div></div>
+          <div class="snum sv-fee"> <div class="sv" id="sFee">฿0</div><div class="sk">ค่าบริการรวม</div></div>
+          <div class="snum sv-net"> <div class="sv" id="sNet">฿0</div><div class="sk">ลูกค้าได้รับ</div></div>
+        </div>
+      </div>
+      <button class="finish-btn" id="finishBtn" onclick="finishSession()" disabled>
+        ✅ สรุปและขึ้นรางวัล — รับลูกค้าคนต่อไป
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE: LOG
+════════════════════════════════ -->
+<div class="page log-page" id="page-log">
+  <div class="log-toolbar">
+    <h2>📋 ประวัติการขึ้นรางวัล</h2>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost" onclick="exportLogCSV()">📥 Export CSV</button>
+      <button class="btn btn-danger btn-sm" onclick="clearLog()">🗑 ล้างประวัติ</button>
+    </div>
+  </div>
+  <div class="log-list" id="logList"></div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE: SETTINGS
+════════════════════════════════ -->
+<div class="page settings-page" id="page-settings">
+  <div class="settings-inner">
+    <div class="settings-section">
+      <h3>📅 ผลรางวัลที่บันทึกไว้</h3>
+      <button class="btn btn-gold" onclick="openAddDraw()" style="margin-bottom:14px;">✚ เพิ่ม / แก้ไขงวด</button>
+      <div id="drawListSettings"></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>💾 Backup ผลรางวัล</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+        Export เก็บไว้เป็นไฟล์ .json — ถ้าเปลี่ยนเครื่อง เปลี่ยน browser หรือข้อมูลหาย ให้ Import กลับมาได้ทันที
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-gold" onclick="exportPrizes()">📤 Export ผลรางวัล (.json)</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">📥 Import ผลรางวัล (.json)</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importPrizes(this)">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🗑 จัดการข้อมูล</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-danger" onclick="clearAllPrizes()">ล้างผลรางวัลทั้งหมด</button>
+        <button class="btn btn-danger" onclick="clearLog()">ล้างประวัติทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add/Edit draw -->
+<div class="modal-overlay" id="drawModal" onclick="closeDrawModal(event)">
+  <div class="modal">
+    <h2 id="drawModalTitle">เพิ่มงวด / กรอกผลรางวัล</h2>
+    <p class="modal-sub">key = เดือน+ต้น(A)/ปลาย(B) — ไม่สนวันจริง เพื่อให้ QR match เสมอ</p>
+    <div class="fg">
+      <label class="fl">📅 งวด</label>
+      <select class="fi fi-sel" id="mDrawKey" onchange="onModalDrawChange()"></select>
+    </div>
+    <div class="fg">
+      <label class="fl">🏆 รางวัลที่ 1 (6 หลัก)</label>
+      <input class="fi" id="mFirst" maxlength="6" placeholder="000000" oninput="numOnly(this)">
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">หน้า 3 ตัว ชุด 1</label><input class="fi" id="m3f1" maxlength="3" placeholder="000" oninput="numOnly(this)"></div>
+      <div class="fg"><label class="fl">หน้า 3 ตัว ชุด 2</label><input class="fi" id="m3f2" maxlength="3" placeholder="000" oninput="numOnly(this)"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">ท้าย 3 ตัว ชุด 1</label><input class="fi" id="m3b1" maxlength="3" placeholder="000" oninput="numOnly(this)"></div>
+      <div class="fg"><label class="fl">ท้าย 3 ตัว ชุด 2</label><input class="fi" id="m3b2" maxlength="3" placeholder="000" oninput="numOnly(this)"></div>
+    </div>
+    <div class="fg"><label class="fl">ท้าย 2 ตัว</label><input class="fi" id="m2" maxlength="2" placeholder="00" oninput="numOnly(this)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDrawModalDirect()">ยกเลิก</button>
+      <button class="btn btn-gold" onclick="saveDraw()">✅ บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Session summary -->
+<div class="modal-overlay summary-modal" id="summaryModal">
+  <div class="modal">
+    <h2>✅ สรุปการขึ้นรางวัล</h2>
+    <p class="modal-sub" id="summaryTime"></p>
+
+    <div class="sum-block" id="summaryGovBlock">
+      <div class="sum-block-title">🟡 สลากรัฐบาล</div>
+      <div class="sum-line"><span>ถูกรางวัล</span><span class="val" id="sumGovWin">—</span></div>
+      <div class="sum-line"><span>ยอดรางวัล</span><span class="val" id="sumGovAmt">—</span></div>
+      <div class="sum-line fee"><span id="sumGovFeeLabel">ค่าบริการ (5%)</span><span class="val" id="sumGovFee">—</span></div>
+    </div>
+
+    <div class="sum-block" id="summaryCharBlock">
+      <div class="sum-block-title">🔵 สลากเพื่อการกุศล</div>
+      <div class="sum-line"><span>ถูกรางวัล</span><span class="val" id="sumCharWin">—</span></div>
+      <div class="sum-line"><span>ยอดรางวัล</span><span class="val" id="sumCharAmt">—</span></div>
+      <div class="sum-line fee"><span id="sumCharFeeLabel">ค่าบริการ (3%)</span><span class="val" id="sumCharFee">—</span></div>
+    </div>
+
+    <div class="sum-block">
+      <div class="sum-block-title">รวมทั้งหมด</div>
+      <div class="sum-line"><span>ใบทั้งหมด</span><span class="val" id="sumAllTickets">—</span></div>
+      <div class="sum-line"><span>ยอดรางวัลรวม</span><span class="val" id="sumAllPrize">—</span></div>
+      <div class="sum-line fee"><span>ค่าบริการรวม</span><span class="val" id="sumAllFee">—</span></div>
+      <div class="sum-line net total">
+        <span style="font-size:16px;font-weight:600;">💰 ลูกค้าได้รับสุทธิ</span>
+        <span class="val" id="sumAllNet">—</span>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cancelFinish()">◀ กลับแก้ไข</button>
+      <button class="btn btn-gold" style="font-size:14px;padding:10px 20px;" onclick="confirmFinish()">
+        ✅ ยืนยัน — รับลูกค้าคนต่อไป
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ════════════════════════════════════════════
+// DRAW KEY SYSTEM
+// key = "YYYY-MM-A" (ต้นเดือน) / "YYYY-MM-B" (ปลายเดือน)
+// ════════════════════════════════════════════
+var MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// วันที่จริงสำหรับงวดที่เลื่อน
+var DRAW_DATE_LABELS = {
+  '2026-01-A': '2 ม.ค. 2569',
+  '2026-01-B': '17 ม.ค. 2569',
+  '2026-05-A': '2 พ.ค. 2569',
+};
+
+function drawKeyLabel(key) {
+  if (DRAW_DATE_LABELS[key]) return DRAW_DATE_LABELS[key];
+  var m = key.match(/^(\d{4})-(\d{2})-([AB])$/);
+  if (!m) return key;
+  var buddhistYear = parseInt(m[1]) + 543;
+  return (m[3]==='A'?'1':'16') + ' ' + MONTHS[parseInt(m[2])-1] + ' ' + buddhistYear;
+}
+
+function buildDrawList() {
+  const list = [];
+  const now = new Date();
+  for (let i = 0; i < 26; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    for (const half of ['B','A']) {
+      list.push({
+        key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${half}`,
+        label: drawKeyLabel(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${half}`)
+      });
+    }
+  }
+  return list;
+}
+var DRAW_LIST = buildDrawList();
+
+// ════════════════════════════════════════════
+// QR PARSER
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+// DRAW NUMBER → DRAW KEY
+//
+// จาก QR จริง (ยืนยันแล้ว):
+//   field[0] = ปี พ.ศ. ย่อ (68, 69, ...)
+//   field[1] = ลำดับงวดในปีนั้น เป็นเลขคี่เสมอ (1,3,5,...)
+//              รีเซ็ตเป็น 1 ทุกต้นปี พ.ศ.
+//
+//   68-37 = 1  ต.ค. 2568
+//   68-39 = 16 ต.ค. 2568
+//   68-41 = 1  พ.ย. 2568
+//   68-43 = 16 พ.ย. 2568
+//   68-45 = 1  ธ.ค. 2568
+//   68-47 = 16 ธ.ค. 2568
+//   69-01 = 2  ม.ค. 2569  (เลื่อนจาก 1 ม.ค.)
+//   69-03 = 17 ม.ค. 2569  (เลื่อนจาก 16 ม.ค.)
+//   69-05 = 1  ก.พ. 2569
+//   69-07 = 16 ก.พ. 2569
+//   69-09 = 1  มี.ค. 2569
+//   69-11 = 16 มี.ค. 2569
+//   69-13 = 1  เม.ย. 2569 ✓
+//   69-15 = 16 เม.ย. 2569 ✓
+//   69-17 = 2  พ.ค. 2569  (เลื่อนวันแรงงาน) ✓
+//   69-19 = 16 พ.ค. 2569  ✓
+//
+// สูตร: drawNum คี่ → ลำดับครึ่งเดือน = (drawNum-1)/2
+//   ครึ่งเดือนที่ 0 = งวดแรกของปีนั้น (ม.ค. ต้น)
+//   ครึ่งเดือนที่ k → เดือน floor(k/2)+1, half k%2 (0=A, 1=B)
+//
+// จุดอ้างอิงเพื่อหาเดือนจริงของงวดที่ 1:
+//   ปี 69: งวด 1 = ม.ค. (เดือน 1) → halfIndex 0 = เดือน 1 A
+//   ปี 68: งวด 1 = ม.ค. 2568 → halfIndex 0 = เดือน 1 A
+// ════════════════════════════════════════════
+
+function drawNumToDrawKey(yearShort, drawNum) {
+  // ทุก 2 งวดติดกัน = วันออกรางวัลเดียวกัน
+  // floor((drawNum-1)/2) = ลำดับวันออกรางวัล (0-based)
+  var halfIndex = Math.floor((drawNum - 1) / 2);
+  var month     = Math.floor(halfIndex / 2) + 1;
+  var half      = halfIndex % 2 === 0 ? 'A' : 'B';
+  var adYear    = 2500 + parseInt(yearShort) - 543;
+  if (month < 1 || month > 12) return null;
+  return adYear + '-' + String(month).padStart(2,'0') + '-' + half;
+}
+
+// งวดที่เลื่อนวัน — drawKey ยังเหมือนเดิม (เดือน+ครึ่ง)
+function parseQR(raw) {
+  var s = raw.trim();
+
+  // ── Format จริง: "69-13-21-857247-7508"
+  const parts = s.split('-');
+  if (parts.length >= 4) {
+    var yearShort = parts[0], drawNum = parts[1], set = parts[2], number = parts[3];
+    if (/^\d{2}$/.test(yearShort) &&
+        /^\d{1,2}$/.test(drawNum) &&
+        /^\d+$/.test(set) &&
+        /^\d{6}$/.test(number)) {
+      var drawKey = drawNumToDrawKey(parseInt(yearShort), parseInt(drawNum));
+      return {
+        type:    'GOV',
+        number:  number,
+        set:     String(parseInt(set)),
+        drawKey: drawKey,
+        parsed:  !!drawKey,
+      };
+    }
+  }
+
+  // ── Fallback: ดึงเลข 6 หลัก
+  const m6 = s.match(/(?<!\d)(\d{6})(?!\d)/);
+  if (m6) return { type:'UNK', number:m6[1], set:'UNK-'+Date.now(), drawKey:null, parsed:false };
+  return null;
+}
+
+function qrToDrawKey(ticket) {
+  // parser คำนวณ drawKey มาให้แล้วโดยตรง
+  if (ticket.drawKey) return ticket.drawKey;
+  return null;
+}
+
+// ════════════════════════════════════════════
+// STORAGE
+// prizeStore: เก็บถาวร (localStorage)
+// session:    รายการสแกนปัจจุบัน (หายเมื่อ refresh)
+// logStore:   ประวัติ sessions (localStorage)
+// ════════════════════════════════════════════
+var PRIZES_KEY = 'lottery_prizes_v1';
+var LOG_KEY    = 'lottery_log_v1';
+
+// ป้องกัน SecurityError ตอนเปิดจาก file://
+function safeGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e) { return fallback; }
+}
+function safeSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch(e) { return false; }
+}
+
+var prizeStore = safeGet(PRIZES_KEY, {});
+var logStore   = safeGet(LOG_KEY, []);
+
+function savePrizes() { safeSet(PRIZES_KEY, prizeStore); }
+function saveLog()    { safeSet(LOG_KEY, logStore); }
+
+// session = [ { number, set, type, drawKey, prize } ]
+let session = [];
+let sessionDupCount = 0;
+var scanMode = 'GOV'; // โหมดปัจจุบัน
+
+function setMode(mode) {
+  scanMode = mode;
+  var isGov = mode === 'GOV';
+  document.getElementById('modeGov').style.border      = isGov ? '2px solid var(--gold)'   : '2px solid var(--border2)';
+  document.getElementById('modeGov').style.background  = isGov ? 'var(--gold-dim)'          : 'transparent';
+  document.getElementById('modeGov').style.color       = isGov ? 'var(--gold)'              : 'var(--muted)';
+  document.getElementById('modeChar').style.border     = isGov ? '2px solid var(--border2)' : '2px solid var(--purple)';
+  document.getElementById('modeChar').style.background = isGov ? 'transparent'              : 'var(--purple-dim)';
+  document.getElementById('modeChar').style.color      = isGov ? 'var(--muted)'             : 'var(--purple)';
+  document.getElementById('modeLabel').textContent     = isGov ? 'รัฐบาล' : 'เพื่อการกุศล';
+  document.getElementById('modeLabel').style.color     = isGov ? 'var(--gold)' : 'var(--purple)';
+  focusScan();
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const sel = document.getElementById('mDrawKey');
+  DRAW_LIST.forEach((d,i) => {
+    const o = document.createElement('option');
+    o.value = d.key; o.textContent = d.label + (i===0?' (ล่าสุด)':'');
+    sel.appendChild(o);
+  });
+  renderAll();
+  focusScan();
+  const loaded = Object.keys(prizeStore).length;
+  if (loaded) setTimeout(() => toast(`📂 โหลดผลรางวัล ${loaded} งวดจากที่บันทึกไว้`, 'new'), 400);
+});
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name==='scan') focusScan();
+  if (name==='settings') renderSettings();
+}
+
+// ════════════════════════════════════════════
+// SCANNER
+// ════════════════════════════════════════════
+let scanTimer = null;
+
+function onScanKeydown(e) {
+  if (e.key==='Enter') {
+    e.preventDefault(); clearTimeout(scanTimer);
+    const v = document.getElementById('scanInput').value.trim();
+    if (v) processRaw(v);
+    document.getElementById('scanInput').value = '';
+  }
+}
+function onScanInput(el) {
+  clearTimeout(scanTimer);
+  if (el.value.trim().length >= 6)
+    scanTimer = setTimeout(() => { processRaw(el.value.trim()); el.value=''; }, 120);
+}
+function processRaw(raw) {
+  const t = parseQR(raw);
+  if (!t) { flashInput('err'); toast('❌ ไม่รู้จัก QR: '+raw.slice(0,15), 'err'); return; }
+  addToSession(t);
+}
+function flashInput(type) {
+  const el = document.getElementById('scanInput');
+  el.classList.remove('fl-ok','fl-dup','fl-new','fl-err');
+  void el.offsetWidth; el.classList.add('fl-'+type);
+  setTimeout(() => el.classList.remove('fl-ok','fl-dup','fl-new','fl-err'), 400);
+}
+function focusScan() { setTimeout(() => document.getElementById('scanInput').focus(), 50); }
+document.addEventListener('click', e => {
+  // focus scanner เฉพาะตอนอยู่หน้า scan เท่านั้น
+  if (!document.getElementById('page-scan').classList.contains('active')) return;
+  if (e.target.closest('.modal-overlay, .nav, select, input, button')) return;
+  focusScan();
+});
+
+// ════════════════════════════════════════════
+// SESSION MANAGEMENT
+// ════════════════════════════════════════════
+function ticketKey(t) { return `${t.number}|${t.set}`; }
+
+function addToSession(ticket) {
+  const drawKey = qrToDrawKey(ticket);
+
+  if (!drawKey) {
+    // ไม่รู้งวด → ใช้งวดล่าสุดที่มีผล
+    const fallback = Object.keys(prizeStore).sort((a,b)=>b.localeCompare(a))[0];
+    if (fallback) {
+      ticket.drawKey = fallback;
+      toast(`⚠️ ไม่ทราบงวด → ใช้ ${drawKeyLabel(fallback)}`, 'new');
+    } else {
+      flashInput('err');
+      toast('⚠️ กรุณาเพิ่มงวดและผลรางวัลก่อน', 'err');
+      openAddDraw(); return;
+    }
+  } else {
+    ticket.drawKey = drawKey;
+  }
+
+  // ใช้ scanMode เป็นประเภทเสมอ (ผู้ใช้เลือกเอง)
+  ticket.type = scanMode;
+
+  // ตรวจซ้ำ
+  if (session.find(t => ticketKey(t)===ticketKey(ticket))) {
+    sessionDupCount++;
+    flashInput('dup');
+    showLastScan(ticket, null, 'dup');
+    updateCounters();
+    toast(`🚫 ซ้ำ! ${ticket.number} ชุด ${ticket.set}`, 'dup');
+    return;
+  }
+
+  const prizes = prizeStore[ticket.drawKey];
+  const prize  = prizes ? checkPrize(ticket.number, prizes) : {win:false,name:'รอผลรางวัล',amount:0,pending:true};
+  ticket.prize = prize;
+
+  const sameNum = session.filter(t => t.number===ticket.number).length > 0;
+  session.unshift(ticket);
+
+  flashInput(sameNum ? 'new' : 'ok');
+  showLastScan(ticket, prize, sameNum ? 'samenum' : 'ok');
+  updateCounters();
+  renderTickets();
+  updateSummaryBar();
+
+  if (sameNum) toast(`✅ ${ticket.number} ชุด ${ticket.set} (ต่างชุด = คนละใบ)`, 'new');
+  if (prize.win) toast(`🎉 ${ticket.number} — ${prize.name} ฿${prize.amount.toLocaleString()}`, 'win');
+  if (prize.pending) toast(`📋 ${ticket.number} → รอผลรางวัล (${drawKeyLabel(ticket.drawKey)})`, 'new');
+}
+
+function removeFromSession(idx) {
+  session.splice(idx, 1);
+  renderTickets();
+  updateSummaryBar();
+  updateCounters();
+}
+
+function clearSession() {
+  if (!session.length) return;
+  if (!confirm('ล้างรายการ session นี้?')) return;
+  session = []; sessionDupCount = 0;
+  renderTickets(); updateSummaryBar(); updateCounters();
+  showLastScan(null, null, 'idle');
+  focusScan();
+}
+
+// ════════════════════════════════════════════
+// CHECK PRIZE
+// ════════════════════════════════════════════
+function checkPrize(num, p) {
+  const n = num.padStart(6,'0');
+  if (n === p.first)                      return {win:true, name:'รางวัลที่ 1',      amount:6000000};
+  if (p.front3.includes(n.slice(0,3)))   return {win:true, name:'เลขหน้า 3 ตัว',   amount:4000};
+  if (p.back3.includes(n.slice(-3)))     return {win:true, name:'เลขท้าย 3 ตัว',   amount:4000};
+  if (n.slice(-2) === p.last2)           return {win:true, name:'เลขท้าย 2 ตัว',   amount:2000};
+  return {win:false, name:'ไม่ถูกรางวัล', amount:0};
+}
+
+// ════════════════════════════════════════════
+// CALCULATE SESSION (แยก GOV / CHAR)
+// ════════════════════════════════════════════
+function calcSession() {
+  const feeGov  = parseFloat(document.getElementById('feeGov').value)  || 0;
+  const feeChar = parseFloat(document.getElementById('feeChar').value) || 0;
+
+  const govTickets  = session.filter(t => t.type!=='CHAR' && t.prize?.win);
+  const charTickets = session.filter(t => t.type==='CHAR' && t.prize?.win);
+
+  const govAmt  = govTickets.reduce((s,t)  => s + t.prize.amount, 0);
+  const charAmt = charTickets.reduce((s,t) => s + t.prize.amount, 0);
+  const govFee  = Math.round(govAmt  * feeGov  / 100);
+  const charFee = Math.round(charAmt * feeChar / 100);
+  const totalAmt = govAmt + charAmt;
+  const totalFee = govFee + charFee;
+  const netAmt   = totalAmt - totalFee;
+
+  return {
+    feeGov, feeChar,
+    govWin: govTickets.length,   govAmt, govFee,
+    charWin: charTickets.length, charAmt, charFee,
+    totalTickets: session.length,
+    totalWin: govTickets.length + charTickets.length,
+    totalAmt, totalFee, netAmt,
+  };
+}
+
+// ════════════════════════════════════════════
+// FINISH SESSION
+// ════════════════════════════════════════════
+function finishSession() {
+  if (!session.length) return;
+  const c = calcSession();
+
+  // populate modal
+  document.getElementById('summaryTime').textContent = `วันที่ ${new Date().toLocaleString('th-TH')}`;
+  document.getElementById('sumGovWin').textContent  = `${c.govWin} ใบ`;
+  document.getElementById('sumGovAmt').textContent  = `฿${c.govAmt.toLocaleString()}`;
+  document.getElementById('sumGovFeeLabel').textContent = `ค่าบริการ (${c.feeGov}%)`;
+  document.getElementById('sumGovFee').textContent  = `- ฿${c.govFee.toLocaleString()}`;
+  document.getElementById('sumCharWin').textContent = `${c.charWin} ใบ`;
+  document.getElementById('sumCharAmt').textContent = `฿${c.charAmt.toLocaleString()}`;
+  document.getElementById('sumCharFeeLabel').textContent = `ค่าบริการ (${c.feeChar}%)`;
+  document.getElementById('sumCharFee').textContent = `- ฿${c.charFee.toLocaleString()}`;
+  document.getElementById('sumAllTickets').textContent = `${c.totalTickets} ใบ (ถูก ${c.totalWin})`;
+  document.getElementById('sumAllPrize').textContent   = `฿${c.totalAmt.toLocaleString()}`;
+  document.getElementById('sumAllFee').textContent     = `- ฿${c.totalFee.toLocaleString()}`;
+  document.getElementById('sumAllNet').textContent     = `฿${c.netAmt.toLocaleString()}`;
+
+  // show/hide GOV/CHAR blocks
+  document.getElementById('summaryGovBlock').style.display  = c.govAmt  ? '' : 'none';
+  document.getElementById('summaryCharBlock').style.display = c.charAmt ? '' : 'none';
+
+  document.getElementById('summaryModal').classList.add('open');
+}
+
+function cancelFinish() {
+  document.getElementById('summaryModal').classList.remove('open');
+  focusScan();
+}
+
+function confirmFinish() {
+  const c = calcSession();
+  const now = new Date();
+
+  // บันทึก log
+  const entry = {
+    id: Date.now(),
+    time: now.toISOString(),
+    timeLabel: now.toLocaleString('th-TH'),
+    calc: c,
+    tickets: session.map(t => ({
+      number:  t.number,
+      set:     t.set.startsWith('UNK-') ? '?' : t.set,
+      type:    t.type,
+      drawKey: t.drawKey,
+      prize:   t.prize,
+    })),
+  };
+  logStore.unshift(entry);
+  saveLog();
+
+  // เคลียร์ session
+  session = []; sessionDupCount = 0;
+  document.getElementById('summaryModal').classList.remove('open');
+
+  // อัปเดต UI
+  renderTickets();
+  updateSummaryBar();
+  updateCounters();
+  showLastScan(null, null, 'idle');
+  updateLogBadge();
+  renderAll();
+  focusScan();
+  toast(`✅ บันทึกแล้ว • สุทธิ ฿${c.netAmt.toLocaleString()} • พร้อมรับลูกค้าคนต่อไป`, 'win');
+}
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+function renderAll() {
+  renderTickets();
+  renderDrawListLeft();
+  updateSummaryBar();
+  updateCounters();
+  updateLogBadge();
+  renderLog();
+}
+
+function renderTickets() {
+  const tbody = document.getElementById('ticketBody');
+  if (!session.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-tbl"><div class="big">🎟️</div><p>พร้อมรับลูกค้า<br>สแกน QR เพื่อเริ่มต้น</p></div></td></tr>`;
+    document.getElementById('finishBtn').disabled = true;
+    return;
+  }
+  document.getElementById('finishBtn').disabled = false;
+
+  // จัดกลุ่มตามงวด
+  const byDraw = {};
+  session.forEach(t => { if (!byDraw[t.drawKey]) byDraw[t.drawKey]=[]; byDraw[t.drawKey].push(t); });
+  const drawKeys = Object.keys(byDraw).sort((a,b) => b.localeCompare(a));
+
+  const typeMap   = {GOV:'type-gov', CHAR:'type-char', UNK:'type-unk'};
+  const typeLabel = {GOV:'รัฐบาล',   CHAR:'กุศล',      UNK:'?'};
+  let html = ''; let gi = session.length;
+
+  drawKeys.forEach(key => {
+    const hasPrize = !!prizeStore[key];
+    html += `<tr class="draw-grp-hdr"><td colspan="8">📅 ${drawKeyLabel(key)} ${hasPrize?'':'⚠️ ยังไม่มีผลรางวัล'}</td></tr>`;
+    byDraw[key].forEach(t => {
+      const setD   = t.set.startsWith('UNK-') ? '?' : t.set;
+      const sameCnt = session.filter(x => x.number===t.number).length;
+      const dupBadge = sameCnt>1 ? `<span style="font-size:9px;color:var(--red);background:var(--red-dim);padding:1px 5px;border-radius:3px;margin-left:3px;">×${sameCnt}</span>` : '';
+      const ri = session.findIndex(x => ticketKey(x)===ticketKey(t));
+      html += `<tr class="trow ${t.prize?.win?'wr':''}">
+        <td class="td-i">${gi--}</td>
+        <td class="td-draw">${drawKeyLabel(key).split(' ').slice(0,2).join(' ')}</td>
+        <td class="td-n ${t.prize?.win?'wn':''}">${t.number}${dupBadge}</td>
+        <td><span class="td-set">${setD}</span></td>
+        <td><span class="td-type ${typeMap[t.type]||'type-unk'}">${typeLabel[t.type]||'?'}</span></td>
+        <td class="td-p ${t.prize?.win?'wp':''}">${t.prize?.name||'—'}</td>
+        <td class="td-a">${t.prize?.win ? '฿'+t.prize.amount.toLocaleString() : '—'}</td>
+        <td class="td-d"><button class="del-btn" onclick="removeFromSession(${ri})">✕</button></td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML = html;
+  document.getElementById('sessionLabel').textContent = `${session.length} ใบ`;
+}
+
+function renderDrawListLeft() {
+  const el = document.getElementById('drawListLeft');
+  const keys = Object.keys(prizeStore).sort((a,b)=>b.localeCompare(a));
+  if (!keys.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:11px;padding:12px;">ยังไม่มีงวด<br>กด "+ เพิ่ม" ด้านบน</div>';
+    return;
+  }
+  el.innerHTML = keys.map(key => {
+    const p = prizeStore[key];
+    const sessTickets = session.filter(t => t.drawKey===key);
+    const sessWin     = sessTickets.filter(t => t.prize?.win).length;
+    return `<div class="draw-item ok">
+      <div class="di-top">
+        <span class="di-date">${drawKeyLabel(key)}</span>
+        <div style="display:flex;gap:4px;">
+          <span class="di-status di-ok">✓</span>
+          <button class="btn btn-ghost btn-sm" onclick="openEditDraw('${key}')" style="padding:2px 7px;font-size:10px;">✏️</button>
+        </div>
+      </div>
+      <div class="di-nums">
+        <span class="di-num">🏆 <b>${p.first||'—'}</b></span>
+        <span class="di-num">หน้า3: <b>${p.front3.join('/')||'—'}</b></span>
+        <span class="di-num">ท้าย3: <b>${p.back3.join('/')||'—'}</b></span>
+        <span class="di-num">ท้าย2: <b>${p.last2||'—'}</b></span>
+      </div>
+      ${sessTickets.length ? `<div class="di-stat">Session นี้: ${sessTickets.length} ใบ • ถูก ${sessWin} ใบ</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderSettings() {
+  const el = document.getElementById('drawListSettings');
+  const keys = Object.keys(prizeStore).sort((a,b)=>b.localeCompare(a));
+  if (!keys.length) { el.innerHTML='<div style="color:var(--muted);font-size:12px;">ยังไม่มีข้อมูล</div>'; return; }
+  el.innerHTML = keys.map(key => {
+    const p = prizeStore[key];
+    return `<div style="background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px;">${drawKeyLabel(key)}</div>
+        <div style="font-size:11px;color:var(--muted);">ที่1: ${p.first} • หน้า3: ${p.front3.join('/')} • ท้าย3: ${p.back3.join('/')} • ท้าย2: ${p.last2}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditDraw('${key}')">✏️ แก้ไข</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteDraw('${key}')">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function renderLog() {
+  const el = document.getElementById('logList');
+  if (!logStore.length) {
+    el.innerHTML = `<div class="log-empty"><div class="big">📋</div><p style="font-size:13px;color:var(--muted);">ยังไม่มีประวัติ<br>เมื่อขึ้นรางวัลเสร็จจะบันทึกที่นี่</p></div>`;
+    return;
+  }
+  el.innerHTML = logStore.map((entry, ei) => {
+    const c = entry.calc;
+    const ticketRows = entry.tickets.map(t => {
+      const typeLabel = {GOV:'รัฐบาล',CHAR:'กุศล',UNK:'?'}[t.type]||'?';
+      return `<div class="log-ticket-row">
+        <span class="ltr-num ${t.prize?.win?'win':''}">${t.number}</span>
+        <span style="font-size:10px;color:var(--muted)">${typeLabel}</span>
+        <span class="ltr-prize ${t.prize?.win?'win':''}">${t.prize?.name||'—'}</span>
+        <span class="ltr-amt">${t.prize?.win?'฿'+t.prize.amount.toLocaleString():'—'}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="log-card">
+      <div class="log-card-top">
+        <div class="log-meta">
+          <div class="log-num">#${logStore.length - ei} — ลูกค้า</div>
+          <div class="log-time">${entry.timeLabel}</div>
+        </div>
+        <div>
+          <div class="log-net">฿${c.netAmt.toLocaleString()}</div>
+          <div class="log-net-label">ลูกค้าได้รับสุทธิ</div>
+        </div>
+      </div>
+      <div class="log-stats">
+        <div class="log-stat"><div class="lsv">${c.totalTickets}</div><div class="lsk">ใบรวม</div></div>
+        <div class="log-stat"><div class="lsv">${c.totalWin}</div><div class="lsk">ถูกรางวัล</div></div>
+        ${c.govAmt  ? `<div class="log-stat"><div class="lsv" style="color:var(--gold)">฿${c.govAmt.toLocaleString()}</div><div class="lsk">รัฐบาล</div></div>` : ''}
+        ${c.charAmt ? `<div class="log-stat"><div class="lsv" style="color:var(--purple)">฿${c.charAmt.toLocaleString()}</div><div class="lsk">กุศล</div></div>` : ''}
+        <div class="log-stat"><div class="lsv" style="color:var(--red)">฿${c.totalFee.toLocaleString()}</div><div class="lsk">ค่าบริการ</div></div>
+        <div class="log-stat"><div class="lsv" style="color:var(--green)">฿${c.netAmt.toLocaleString()}</div><div class="lsk">สุทธิ</div></div>
+      </div>
+      <button class="log-toggle" onclick="toggleLogTickets(${ei})">▼ ดูรายการ ${entry.tickets.length} ใบ</button>
+      <div class="log-tickets" id="logTickets-${ei}">${ticketRows}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleLogTickets(ei) {
+  const el = document.getElementById('logTickets-'+ei);
+  el.classList.toggle('open');
+  const btn = el.previousElementSibling;
+  btn.textContent = el.classList.contains('open') ? '▲ ซ่อน' : `▼ ดูรายการ`;
+}
+
+function updateSummaryBar() {
+  const c = calcSession();
+  document.getElementById('sTot').textContent    = c.totalTickets;
+  document.getElementById('sWin').textContent    = c.totalWin;
+  document.getElementById('sGovAmt').textContent = c.govAmt  ? '฿'+c.govAmt.toLocaleString()  : '฿0';
+  document.getElementById('sCharAmt').textContent= c.charAmt ? '฿'+c.charAmt.toLocaleString() : '฿0';
+  document.getElementById('sFee').textContent    = '฿'+c.totalFee.toLocaleString();
+  document.getElementById('sNet').textContent    = '฿'+c.netAmt.toLocaleString();
+  document.getElementById('finishBtn').disabled  = session.length === 0;
+}
+
+function updateCounters() {
+  document.getElementById('cTotal').textContent = session.length;
+  document.getElementById('cWin').textContent   = session.filter(t=>t.prize?.win).length;
+  document.getElementById('cDup').textContent   = sessionDupCount;
+}
+
+function updateLogBadge() {
+  const badge = document.getElementById('logBadge');
+  if (logStore.length) {
+    badge.style.display = ''; badge.textContent = logStore.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function showLastScan(ticket, prize, state) {
+  const el = document.getElementById('lastScan');
+  if (state==='idle'||!ticket) {
+    el.innerHTML='<div class="ls-top"><div class="ls-num" style="color:var(--muted);font-size:12px;letter-spacing:1px;">รอสแกน...</div></div>';
+    return;
+  }
+  const setD = ticket.set.startsWith('UNK-') ? '?' : ticket.set;
+  const typeLabel = {GOV:'รัฐบาล',CHAR:'กุศล',UNK:'?'}[ticket.type]||'?';
+  const typeClass = {GOV:'gov',CHAR:'char',UNK:''}[ticket.type]||'';
+  if (state==='dup') {
+    el.innerHTML=`<div class="ls-top"><div class="ls-num" style="color:var(--red)">${ticket.number}</div><span class="ls-tag dup">🚫 ซ้ำ</span></div>
+    <div class="ls-meta"><span>ชุด ${setD}</span></div>`;
+    return;
+  }
+  const w = prize?.win; const pend = prize?.pending;
+  el.innerHTML=`
+    <div class="ls-top">
+      <div class="ls-num" style="color:${w?'var(--green)':pend?'var(--gold)':state==='samenum'?'var(--blue)':'var(--text)'}">${ticket.number}</div>
+      ${typeClass ? `<span class="ls-tag ${typeClass}">${typeLabel}</span>` : ''}
+      ${w ? `<span class="ls-tag win">${prize.name}</span>` : pend ? '<span class="ls-tag new">รอผล</span>' : ''}
+      ${state==='samenum' ? '<span class="ls-tag" style="background:var(--blue-dim);color:var(--blue);border:1px solid rgba(79,195,247,.3)">ต่างชุด</span>' : ''}
+    </div>
+    <div class="ls-meta">
+      <span>ชุด ${setD}</span>
+      <span>${drawKeyLabel(ticket.drawKey||'')}</span>
+      ${w ? `<span style="color:var(--gold);font-family:'IBM Plex Mono'">฿${prize.amount.toLocaleString()}</span>` : ''}
+    </div>`;
+}
+
+// ════════════════════════════════════════════
+// DRAW PRIZE MODAL
+// ════════════════════════════════════════════
+function openAddDraw() {
+  document.getElementById('drawModalTitle').textContent = 'เพิ่มงวด / กรอกผลรางวัล';
+  document.getElementById('mDrawKey').disabled = false;
+  const missing = DRAW_LIST.find(d => !prizeStore[d.key]);
+  document.getElementById('mDrawKey').value = missing ? missing.key : DRAW_LIST[0].key;
+  clearDrawInputs();
+  document.getElementById('drawModal').classList.add('open');
+}
+function openEditDraw(key) {
+  document.getElementById('drawModalTitle').textContent = 'แก้ไขผลรางวัล';
+  document.getElementById('mDrawKey').value = key;
+  document.getElementById('mDrawKey').disabled = true;
+  loadDrawInputs(key);
+  document.getElementById('drawModal').classList.add('open');
+}
+function onModalDrawChange() { loadDrawInputs(document.getElementById('mDrawKey').value); }
+function loadDrawInputs(key) {
+  const p = prizeStore[key];
+  if (p) {
+    document.getElementById('mFirst').value = p.first||'';
+    document.getElementById('m3f1').value   = p.front3[0]||'';
+    document.getElementById('m3f2').value   = p.front3[1]||'';
+    document.getElementById('m3b1').value   = p.back3[0]||'';
+    document.getElementById('m3b2').value   = p.back3[1]||'';
+    document.getElementById('m2').value     = p.last2||'';
+  } else clearDrawInputs();
+}
+function clearDrawInputs() {
+  ['mFirst','m3f1','m3f2','m3b1','m3b2','m2'].forEach(id => document.getElementById(id).value='');
+}
+function closeDrawModal(e) {
+  if (e.target===document.getElementById('drawModal')) closeDrawModalDirect();
+}
+function closeDrawModalDirect() {
+  document.getElementById('drawModal').classList.remove('open');
+  document.getElementById('mDrawKey').disabled = false;
+  focusScan();
+}
+function saveDraw() {
+  const g = id => document.getElementById(id).value.trim().replace(/\D/g,'');
+  const key = document.getElementById('mDrawKey').value;
+  if (!g('mFirst')||g('mFirst').length<6) { alert('กรุณากรอกรางวัลที่ 1 (6 หลัก)'); return; }
+  prizeStore[key] = {
+    first:  g('mFirst').slice(0,6),
+    front3: [g('m3f1').slice(0,3), g('m3f2').slice(0,3)].filter(Boolean),
+    back3:  [g('m3b1').slice(0,3), g('m3b2').slice(0,3)].filter(Boolean),
+    last2:  g('m2').slice(0,2),
+  };
+  // re-check tickets ใน session ที่งวดนี้
+  session.filter(t=>t.drawKey===key).forEach(t => { t.prize = checkPrize(t.number, prizeStore[key]); });
+  savePrizes();
+  closeDrawModalDirect();
+  renderAll();
+  toast(`✅ บันทึกผล ${drawKeyLabel(key)} แล้ว`, 'win');
+}
+function deleteDraw(key) {
+  if (!confirm(`ลบผลรางวัล ${drawKeyLabel(key)}?`)) return;
+  delete prizeStore[key];
+  savePrizes();
+  renderAll();
+  renderSettings();
+}
+
+// ════════════════════════════════════════════
+// CLEAR / EXPORT
+// ════════════════════════════════════════════
+function clearAllPrizes() {
+  if (!confirm('ล้างผลรางวัลที่บันทึกไว้ทั้งหมด?')) return;
+  Object.keys(prizeStore).forEach(k => delete prizeStore[k]);
+  savePrizes();
+  renderAll(); renderSettings();
+  toast('🗑 ล้างผลรางวัลทั้งหมดแล้ว', 'err');
+}
+function clearLog() {
+  if (!confirm('ล้างประวัติทั้งหมด?')) return;
+  logStore.length = 0;
+  saveLog();
+  renderLog(); updateLogBadge();
+  toast('🗑 ล้างประวัติแล้ว', 'err');
+}
+
+function exportLogCSV() {
+  if (!logStore.length) { alert('ไม่มีประวัติ'); return; }
+  const rows = ['\uFEFF#,วันที่,ใบรวม,ถูกรางวัล,ยอดรัฐบาล,ค่าบริการรัฐ,ยอดกุศล,ค่าบริการกุศล,ยอดรวม,ค่าบริการรวม,สุทธิ'];
+  logStore.forEach((e,i) => {
+    const c = e.calc;
+    rows.push(`${logStore.length-i},"${e.timeLabel}",${c.totalTickets},${c.totalWin},${c.govAmt},${c.govFee},${c.charAmt},${c.charFee},${c.totalAmt},${c.totalFee},${c.netAmt}`);
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lottery_log_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function numOnly(el) { el.value = el.value.replace(/\D/g,''); }
+
+// ════════════════════════════════════════════
+// EXPORT / IMPORT ผลรางวัล
+// ════════════════════════════════════════════
+function exportPrizes() {
+  if (!Object.keys(prizeStore).length) {
+    alert('ยังไม่มีผลรางวัลที่บันทึกไว้');
+    return;
+  }
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    prizes: prizeStore,
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lottery_prizes_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`📤 Export ${Object.keys(prizeStore).length} งวด เรียบร้อยแล้ว`, 'win');
+}
+
+function importPrizes(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      var prizes = data.prizes || data;
+      if (!prizes || typeof prizes !== 'object' || Array.isArray(prizes))
+        throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');
+      var keys = Object.keys(prizes);
+      if (!keys.length) throw new Error('ไม่พบข้อมูลในไฟล์');
+
+      var added = 0, updated = 0;
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var existing = prizeStore[k];
+        if (existing) updated++; else added++;
+        // ใช้ Object.defineProperty แทนการ assign ตรงๆ
+        prizeStore[k] = {
+          first:  prizes[k].first  || '',
+          front3: prizes[k].front3 || [],
+          back3:  prizes[k].back3  || [],
+          last2:  prizes[k].last2  || '',
+        };
+      }
+      savePrizes();
+      renderAll();
+      renderSettings();
+      input.value = '';
+      toast('📥 Import สำเร็จ: เพิ่ม ' + added + ' งวด', 'win');
+    } catch(err) {
+      alert('Import ไม่สำเร็จ: ' + err.message);
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+function toast(msg, type='info') {
+  const w = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`; el.textContent = msg;
+  w.appendChild(el); setTimeout(() => el.remove(), 3200);
+}
+</script>
+</body>
+</html>
